@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.cloudburstmc.math.vector.Vector2f;
+import org.cloudburstmc.protocol.bedrock.data.camera.AimAssistAction;
 import org.cloudburstmc.protocol.common.PacketSignal;
 
 @Data
@@ -13,11 +14,15 @@ public class CameraAimAssistPacket implements BedrockPacket {
     private Vector2f viewAngle;
     private float distance;
     private TargetMode targetMode;
-    private Action action;
+    private AimAssistAction action;
     /**
      * @since v766
      */
     private String presetId;
+    /**
+     * @since v827
+     */
+    private boolean showDebugRender;
 
     @Override
     public PacketSignal handle(BedrockPacketHandler handler) {
@@ -41,10 +46,5 @@ public class CameraAimAssistPacket implements BedrockPacket {
     public enum TargetMode {
         ANGLE,
         DISTANCE
-    }
-
-    public enum Action {
-        SET,
-        CLEAR
     }
 }

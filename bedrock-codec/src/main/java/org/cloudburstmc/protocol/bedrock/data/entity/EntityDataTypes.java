@@ -7,24 +7,24 @@ import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.ParticleType;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.EnumMap;
+import java.util.Map;
 
 @UtilityClass
 public class EntityDataTypes {
 
-    public static final EntityDataType<EnumSet<EntityFlag>> FLAGS = new EntityDataType<EnumSet<EntityFlag>>(EnumSet.class, "FLAGS") {
+    public static final EntityDataType<EnumMap<EntityFlag, Boolean>> FLAGS = new EntityDataType<EnumMap<EntityFlag, Boolean>>(EnumMap.class, "FLAGS") {
         @Override
         public boolean isInstance(Object value) {
-            return value instanceof EnumSet &&
-                    (((EnumSet<?>) value).isEmpty() || ((Set<?>) value).iterator().next() instanceof EntityFlag);
+            return value instanceof EnumMap &&
+                    (((EnumMap<?, ?>) value).isEmpty() || ((Map<?, ?>) value).keySet().iterator().next() instanceof EntityFlag);
         }
     };
     public static final EntityDataType<Integer> STRUCTURAL_INTEGRITY = new EntityDataType<>(Integer.class, "STRUCTURAL_INTEGRITY");
     public static final EntityDataType<Integer> VARIANT = new EntityDataType<>(Integer.class, "VARIANT");
     public static final EntityDataType<BlockDefinition> BLOCK = new EntityDataType<>(BlockDefinition.class, "BLOCK");
     public static final EntityDataType<Byte> COLOR = new EntityDataType<>(Byte.class, "COLOR");
-    public static final EntityDataType<String> NAME = new EntityDataType<>(String.class, "NAME");
+    public static final EntityDataType<CharSequence> NAME = new EntityDataType<>(CharSequence.class, "NAME");
     /**
      * Unique ID of the entity that owns or created this entity.
      */
@@ -54,6 +54,9 @@ public class EntityDataTypes {
     public static final EntityDataType<Integer> OLD_SWELL = new EntityDataType<>(Integer.class, "OLD_SWELL");
     public static final EntityDataType<Integer> SWELL_DIRECTION = new EntityDataType<>(Integer.class, "SWELL_DIRECTION");
     public static final EntityDataType<Byte> CHARGE_AMOUNT = new EntityDataType<>(Byte.class, "CHARGE_AMOUNT");
+    /**
+     * @deprecated since v827
+     */
     public static final EntityDataType<BlockDefinition> CARRY_BLOCK_STATE = new EntityDataType<>(BlockDefinition.class, "CARRY_BLOCK_STATE");
     public static final EntityDataType<Byte> CLIENT_EVENT = new EntityDataType<>(Byte.class, "CLIENT_EVENT");
     public static final EntityDataType<Boolean> USING_ITEM = new EntityDataType<>(Boolean.class, "USING_ITEM");
@@ -160,8 +163,8 @@ public class EntityDataTypes {
     public static final EntityDataType<Integer> END_CRYSTAL_TICK_OFFSET = new EntityDataType<>(Integer.class, "END_CRYSTAL_TICK_OFFSET");
     public static final EntityDataType<Byte> NAMETAG_ALWAYS_SHOW = new EntityDataType<>(Byte.class, "NAMETAG_ALWAYS_SHOW");
     public static final EntityDataType<Byte> COLOR_2 = new EntityDataType<>(Byte.class, "COLOR_2");
-    public static final EntityDataType<String> NAME_AUTHOR = new EntityDataType<>(String.class, "NAME_AUTHOR");
-    public static final EntityDataType<String> SCORE = new EntityDataType<>(String.class, "SCORE");
+    public static final EntityDataType<CharSequence> NAME_AUTHOR = new EntityDataType<>(CharSequence.class, "NAME_AUTHOR");
+    public static final EntityDataType<CharSequence> SCORE = new EntityDataType<>(CharSequence.class, "SCORE");
     /**
      * Unique entity ID that the balloon string is attached to.
      * Disable by setting value to -1.
@@ -176,7 +179,13 @@ public class EntityDataTypes {
     public static final EntityDataType<Float> SITTING_AMOUNT = new EntityDataType<>(Float.class, "SITTING_AMOUNT");
     public static final EntityDataType<Float> SITTING_AMOUNT_PREVIOUS = new EntityDataType<>(Float.class, "SITTING_AMOUNT_PREVIOUS");
     public static final EntityDataType<Integer> EATING_COUNTER = new EntityDataType<>(Integer.class, "EATING_COUNTER");
-    public static final EntityDataType<EnumSet<EntityFlag>> FLAGS_2 = new EntityDataType<>(EnumSet.class, "FLAGS_2");
+    public static final EntityDataType<EnumMap<EntityFlag, Boolean>> FLAGS_2 = new EntityDataType<EnumMap<EntityFlag, Boolean>>(EnumMap.class, "FLAGS_2") {
+        @Override
+        public boolean isInstance(Object value) {
+            return value instanceof EnumMap &&
+                    (((EnumMap<?, ?>) value).isEmpty() || ((Map<?, ?>) value).keySet().iterator().next() instanceof EntityFlag);
+        }
+    };
     public static final EntityDataType<Float> LAYING_AMOUNT = new EntityDataType<>(Float.class, "LAYING_AMOUNT");
     public static final EntityDataType<Float> LAYING_AMOUNT_PREVIOUS = new EntityDataType<>(Float.class, "LAYING_AMOUNT_PREVIOUS");
     public static final EntityDataType<Integer> AREA_EFFECT_CLOUD_DURATION = new EntityDataType<>(Integer.class, "AREA_EFFECT_CLOUD_DURATION");
@@ -188,7 +197,7 @@ public class EntityDataTypes {
     public static final EntityDataType<Float> AREA_EFFECT_CLOUD_CHANGE_RATE = new EntityDataType<>(Float.class, "AREA_EFFECT_CLOUD_CHANGE_RATE");
     public static final EntityDataType<Float> AREA_EFFECT_CLOUD_CHANGE_ON_PICKUP = new EntityDataType<>(Float.class, "AREA_EFFECT_CLOUD_CHANGE_ON_PICKUP");
     public static final EntityDataType<Integer> AREA_EFFECT_CLOUD_PICKUP_COUNT = new EntityDataType<>(Integer.class, "AREA_EFFECT_CLOUD_PICKUP_COUNT");
-    public static final EntityDataType<String> INTERACT_TEXT = new EntityDataType<>(String.class, "INTERACT_TEXT");
+    public static final EntityDataType<CharSequence> INTERACT_TEXT = new EntityDataType<>(CharSequence.class, "INTERACT_TEXT");
     public static final EntityDataType<Integer> TRADE_TIER = new EntityDataType<>(Integer.class, "TRADE_TIER");
     public static final EntityDataType<Integer> MAX_TRADE_TIER = new EntityDataType<>(Integer.class, "MAX_TRADE_TIER");
     public static final EntityDataType<Integer> TRADE_EXPERIENCE = new EntityDataType<>(Integer.class, "TRADE_EXPERIENCE");
@@ -276,4 +285,43 @@ public class EntityDataTypes {
      * @since v685
      */
     public static final EntityDataType<Long> VISIBLE_MOB_EFFECTS = new EntityDataType<>(Long.class, "VISIBLE_MOB_EFFECTS");
+    /**
+     * @since v776
+     */
+    public static final EntityDataType<CharSequence> FILTERED_NAME = new EntityDataType<>(CharSequence.class, "FILTERED_NAME");
+    /**
+     * @since v776
+     */
+    public static final EntityDataType<Vector3f> BED_ENTER_POSITION = new EntityDataType<>(Vector3f.class, "BED_ENTER_POSITION");
+    /**
+     * @since v800
+     */
+    public static final EntityDataType<Float> SEAT_THIRD_PERSON_CAMERA_RADIUS = new EntityDataType<>(Float.class, "SEAT_THIRD_PERSON_CAMERA_RADIUS");
+    /**
+     * @since v800
+     */
+    public static final EntityDataType<Float> SEAT_CAMERA_RELAX_DISTANCE_SMOOTHING = new EntityDataType<>(Float.class, "SEAT_CAMERA_RELAX_DISTANCE_SMOOTHING");
+    /**
+     * @since v924
+     */
+    public static final EntityDataType<Integer> AIM_ASSIST_PRIORITY_PRESET_ID = new EntityDataType<>(Integer.class, "AIM_ASSIST_PRIORITY_PRESET_ID");
+    /**
+     * @since v924
+     */
+    public static final EntityDataType<Integer> AIM_ASSIST_PRIORITY_CATEGORY_ID = new EntityDataType<>(Integer.class, "AIM_ASSIST_PRIORITY_CATEGORY_ID");
+    /**
+     * @since v924
+     */
+    public static final EntityDataType<Integer> AIM_ASSIST_PRIORITY_ACTOR_ID = new EntityDataType<>(Integer.class, "AIM_ASSIST_PRIORITY_ACTOR_ID");
+    public static final EntityDataType<Long> ARROW_SHOOTER_ID = new EntityDataType<>(Long.class, "ARROW_SHOOTER_ID");
+    public static final EntityDataType<Long> FIREWORK_SHOOTER_ID = new EntityDataType<>(Long.class, "FIREWORK_SHOOTER_ID");
+    public static final EntityDataType<Vector3f> FIREWORK_DIRECTION = new EntityDataType<>(Vector3f.class, "FIREWORK_DIRECTION");
+    /**
+     * @since v975
+     */
+    public static final EntityDataType<Long> RESERVED_139 = new EntityDataType<>(Long.class, "RESERVED_139");
+    /**
+     * @since v975
+     */
+    public static final EntityDataType<Float> NAMEPLATE_RENDER_DISTANCE_MAX = new EntityDataType<>(Float.class, "NAMEPLATE_RENDER_DISTANCE_MAX");
 }

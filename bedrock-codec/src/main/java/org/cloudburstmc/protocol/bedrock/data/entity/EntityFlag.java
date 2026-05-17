@@ -149,5 +149,50 @@ public enum EntityFlag {
     /**
      * @since v671
      */
-    BODY_ROTATION_BLOCKED
+    BODY_ROTATION_BLOCKED,
+    /**
+     * @since v776
+     */
+    RENDER_WHEN_INVISIBLE,
+    /**
+     * @since v786
+     * ROTATION_AXIS_ALIGNED since v827
+     */
+    BODY_ROTATION_AXIS_ALIGNED,
+    /**
+     * @since v786
+     */
+    COLLIDABLE,
+    /**
+     * @since v786
+     */
+    WASD_AIR_CONTROLLED,
+    /**
+     * @since v800
+     */
+    DOES_SERVER_AUTH_ONLY_DISMOUNT,
+    /**
+     * @since v818
+     */
+    BODY_ROTATION_ALWAYS_FOLLOWS_HEAD,
+    /**
+     * @since v843
+     */
+    CAN_USE_VERTICAL_MOVEMENT_ACTION,
+    /**
+     * @since v859
+     */
+    BODY_ROTATION_LOCKED_TO_VEHICLE,
+    /**
+     * @since v975
+     */
+    USES_LEGACY_FRICTION,
+    /**
+     * @since v975
+     */
+    USES_UNIFORM_AIR_DRAG,
+    /**
+     * @since v975
+     */
+    NAMEPLATE_DEPTH_TESTED,
 }

@@ -9,6 +9,7 @@ import org.cloudburstmc.nbt.NBTOutputStream;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtUtils;
 import org.cloudburstmc.protocol.bedrock.codec.BaseBedrockCodecHelper;
+import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.EntityDataTypeMap;
 import org.cloudburstmc.protocol.bedrock.data.GameRuleData;
 import org.cloudburstmc.protocol.bedrock.data.command.CommandEnumConstraint;
@@ -16,12 +17,10 @@ import org.cloudburstmc.protocol.bedrock.data.command.CommandEnumData;
 import org.cloudburstmc.protocol.bedrock.data.command.CommandOriginData;
 import org.cloudburstmc.protocol.bedrock.data.command.CommandOriginType;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataFormat;
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap;
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataType;
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData;
+import org.cloudburstmc.protocol.bedrock.data.entity.*;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.transformer.EntityDataTransformer;
+import org.cloudburstmc.protocol.common.util.TriConsumer;
 import org.cloudburstmc.protocol.common.util.TypeMap;
 import org.cloudburstmc.protocol.common.util.VarInts;
 import org.cloudburstmc.protocol.common.util.stream.LittleEndianByteBufOutputStream;
@@ -29,6 +28,7 @@ import org.cloudburstmc.protocol.common.util.stream.LittleEndianByteBufOutputStr
 import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -49,7 +49,7 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
         int type = buffer.readUnsignedByte();
         boolean immediate = buffer.readBoolean();
 
-        return new EntityLinkData(from, to, EntityLinkData.Type.values()[type], immediate);
+        return new EntityLinkData(from, to, EntityLinkData.Type.values()[type], immediate, false, 0f);
     }
 
     @Override
@@ -150,6 +150,16 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
     }
 
     @Override
+    public ItemData readNetworkItemStackDescriptor(ByteBuf buffer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void writeNetworkItemStackDescriptor(ByteBuf buffer, ItemData item) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public ItemData readItemInstance(ByteBuf buffer) {
         return readItem(buffer);
     }
@@ -178,7 +188,7 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
         writeUuid(buffer, originData.getUuid());
         writeString(buffer, originData.getRequestId());
         if (originData.getOrigin() == CommandOriginType.DEV_CONSOLE || originData.getOrigin() == CommandOriginType.TEST) {
-            VarInts.writeLong(buffer, originData.getEvent());
+            VarInts.writeLong(buffer, originData.getPlayerId());
         }
     }
 
@@ -222,8 +232,18 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
     }
 
     @Override
+    public GameRuleData<?> readGameRuleInStartGame(ByteBuf buffer) {
+        return readGameRule(buffer);
+    }
+
+    @Override
+    public void writeGameRuleInStartGame(ByteBuf buffer, GameRuleData<?> gameRule) {
+        writeGameRule(buffer, gameRule);
+    }
+
+    @Override
     public void readEntityData(ByteBuf buffer, EntityDataMap entityDataMap) {
-        checkNotNull(entityDataMap, "entityDataDictionary");
+        checkNotNull(entityDataMap, "entityDataMap");
 
         int length = VarInts.readUnsignedInt(buffer);
         checkArgument(this.encodingSettings.maxListSize() <= 0 || length <= this.encodingSettings.maxListSize(), "Entity data size is too big: %s", length);
@@ -272,7 +292,7 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
                     EntityDataTransformer<Object, ?> transformer = (EntityDataTransformer<Object, ?>) definition.getTransformer();
                     Object transformedValue = transformer.deserialize(this, entityDataMap, value);
                     if (transformedValue != null) {
-                        entityDataMap.put(definition.getType(), transformer.deserialize(this, entityDataMap, value));
+                        entityDataMap.put(definition.getType(), transformedValue);
                     }
                 }
             } else {
@@ -284,58 +304,73 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
     @SuppressWarnings("unchecked")
     @Override
     public void writeEntityData(ByteBuf buffer, EntityDataMap entityDataMap) {
-        checkNotNull(entityDataMap, "entityDataDictionary");
+        checkNotNull(entityDataMap, "entityDataMap");
 
-        VarInts.writeUnsignedInt(buffer, entityDataMap.size());
+        // Collect serialized entries first
+        List<Map.Entry<EntityDataTypeMap.Definition<?>, Object>> serializedEntries = new LinkedList<>();
 
         for (Map.Entry<EntityDataType<?>, Object> entry : entityDataMap.entrySet()) {
             EntityDataTypeMap.Definition<?> definition = this.entityData.fromType(entry.getKey());
-
-            VarInts.writeUnsignedInt(buffer, definition.getId());
-            VarInts.writeUnsignedInt(buffer, definition.getFormat().ordinal());
 
             try {
                 Object value = ((EntityDataTransformer<?, Object>) definition.getTransformer())
                         .serialize(this, entityDataMap, entry.getValue());
 
-                switch (definition.getFormat()) {
-                    case BYTE:
-                        buffer.writeByte((byte) value);
-                        break;
-                    case SHORT:
-                        buffer.writeShortLE((short) value);
-                        break;
-                    case INT:
-                        VarInts.writeInt(buffer, (int) value);
-                        break;
-                    case FLOAT:
-                        buffer.writeFloatLE((float) value);
-                        break;
-                    case STRING:
-                        writeString(buffer, (String) value);
-                        break;
-                    case NBT:
-                        this.writeItem(buffer, ItemData.builder()
-                                .definition(ItemDefinition.LEGACY_FIREWORK)
-                                .damage(0)
-                                .count(1)
-                                .tag((NbtMap) value)
-                                .build());
-                        break;
-                    case VECTOR3I:
-                        writeVector3i(buffer, (Vector3i) value);
-                        break;
-                    case LONG:
-                        VarInts.writeLong(buffer, (long) value);
-                        break;
-                    case VECTOR3F:
-                        writeVector3f(buffer, (Vector3f) value);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("Unknown entity data type " + definition.getFormat());
+                // Skip if transformer returns null (indicating this entry shouldn't be serialized)
+                if (value == null) {
+                    continue;
                 }
+
+                serializedEntries.add(new AbstractMap.SimpleEntry<>(definition, value));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Failed to encode EntityData " + definition.getId() + " of " + definition.getType().getTypeName(), e);
+            }
+        }
+
+        VarInts.writeUnsignedInt(buffer, serializedEntries.size());
+
+        for (Map.Entry<EntityDataTypeMap.Definition<?>, Object> entry : serializedEntries) {
+            EntityDataTypeMap.Definition<?> definition = entry.getKey();
+            Object value = entry.getValue();
+
+            VarInts.writeUnsignedInt(buffer, definition.getId());
+            VarInts.writeUnsignedInt(buffer, definition.getFormat().ordinal());
+
+            switch (definition.getFormat()) {
+                case BYTE:
+                    buffer.writeByte((byte) value);
+                    break;
+                case SHORT:
+                    buffer.writeShortLE((short) value);
+                    break;
+                case INT:
+                    VarInts.writeInt(buffer, (int) value);
+                    break;
+                case FLOAT:
+                    buffer.writeFloatLE((float) value);
+                    break;
+                case STRING:
+                    writeString(buffer, (String) value);
+                    break;
+                case NBT:
+                    this.writeItem(buffer, ItemData.builder()
+                            .definition(ItemDefinition.LEGACY_FIREWORK)
+                            .damage(0)
+                            .count(1)
+                            .tag((NbtMap) value)
+                            .build());
+                    break;
+                case VECTOR3I:
+                    writeVector3i(buffer, (Vector3i) value);
+                    break;
+                case LONG:
+                    VarInts.writeLong(buffer, (long) value);
+                    break;
+                case VECTOR3F:
+                    writeVector3f(buffer, (Vector3f) value);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown entity data type " + definition.getFormat());
             }
         }
     }
@@ -375,6 +410,14 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
     }
 
     @Override
+    public <O> O readOptional(ByteBuf buffer, O emptyValue, BiFunction<ByteBuf, BedrockCodecHelper, O> function) {
+        if (buffer.readBoolean()) {
+            return function.apply(buffer, this);
+        }
+        return emptyValue;
+    }
+
+    @Override
     public <T> void writeOptional(ByteBuf buffer, Predicate<T> isPresent, T object, BiConsumer<ByteBuf, T> consumer) {
         checkNotNull(consumer, "read consumer");
         boolean exists = isPresent.test(object);
@@ -385,7 +428,22 @@ public class BedrockCodecHelper_v291 extends BaseBedrockCodecHelper {
     }
 
     @Override
+    public <T> void writeOptional(ByteBuf buffer, Predicate<T> isPresent, T object, TriConsumer<ByteBuf, BedrockCodecHelper, T> consumer) {
+        checkNotNull(consumer, "read consumer");
+        boolean exists = isPresent.test(object);
+        buffer.writeBoolean(exists);
+        if (exists) {
+            consumer.accept(buffer, this, object);
+        }
+    }
+
+    @Override
     public <T> void writeOptionalNull(ByteBuf buffer, T object, BiConsumer<ByteBuf, T> consumer) {
+        this.writeOptional(buffer, Objects::nonNull, object, consumer);
+    }
+
+    @Override
+    public <T> void writeOptionalNull(ByteBuf buffer, T object, TriConsumer<ByteBuf, BedrockCodecHelper, T> consumer) {
         this.writeOptional(buffer, Objects::nonNull, object, consumer);
     }
 }

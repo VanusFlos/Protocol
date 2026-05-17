@@ -798,6 +798,225 @@ public enum SoundEvent {
      * @since v766
      */
     CLOSE_LONG,
-
+    /**
+     * @since v800
+     */
+    IMITATE_PHANTOM,
+    /**
+     * @since v800
+     */
+    IMITATE_ZOGLIN,
+    /**
+     * @since v800
+     */
+    IMITATE_GUARDIAN,
+    /**
+     * @since v800
+     */
+    IMITATE_RAVAGER,
+    /**
+     * @since v800
+     */
+    IMITATE_PILLAGER,
+    /**
+     * @since v800
+     */
+    PLACE_IN_WATER,
+    /**
+     * @since v800
+     */
+    STATE_CHANGE,
+    /**
+     * @since v800
+     */
+    IMITATE_HAPPY_GHAST,
+    /**
+     * @since v800
+     */
+    UNEQUIP_GENERIC,
+    /**
+     * @since v818
+     */
+    RECORD_TEARS,
+    /**
+     * @since v818
+     */
+    THE_END_LIGHT_FLASH,
+    /**
+     * @since v818
+     */
+    LEAD_LEASH,
+    /**
+     * @since v818
+     */
+    LEAD_UNLEASH,
+    /**
+     * @since v818
+     */
+    LEAD_BREAK,
+    /**
+     * @since v818
+     */
+    UNSADDLE,
+    /**
+     * @since v819
+     */
+    RECORD_LAVA_CHICKEN,
+    /**
+     * @since v827
+     */
+    EQUIP_COPPER,
+    /**
+     * @since v843
+     */
+    PLACE_ITEM,
+    /**
+     * @since v843
+     */
+    SINGLE_ITEM_SWAP,
+    /**
+     * @since v843
+     */
+    MULTI_ITEM_SWAP,
+    /**
+     * @since v897
+     */
+    LUNGE_1,
+    /**
+     * @since v897
+     */
+    LUNGE_2,
+    /**
+     * @since v897
+     */
+    LUNGE_3,
+    /**
+     * @since v897
+     */
+    ATTACK_CRITICAL,
+    /**
+     * @since v897
+     */
+    SPEAR_ATTACK_HIT,
+    /**
+     * @since v897
+     */
+    SPEAR_ATTACK_MISS,
+    /**
+     * @since v897
+     */
+    WOODEN_SPEAR_ATTACK_HIT,
+    /**
+     * @since v897
+     */
+    WOODEN_SPEAR_ATTACK_MISS,
+    /**
+     * @since v897
+     */
+    IMITATE_PARCHED,
+    /**
+     * @since v897
+     */
+    IMITATE_CAMEL_HUSK,
+    /**
+     * @since v897
+     */
+    SPEAR_USE,
+    /**
+     * @since v897
+     */
+    WOODEN_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    SADDLE_IN_WATER,
+    /**
+     * @since v924
+     */
+    STONE_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    IRON_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    COPPER_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    GOLDEN_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    DIAMOND_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    NETHERITE_SPEAR_ATTACK_HIT,
+    /**
+     * @since v924
+     */
+    STONE_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    IRON_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    COPPER_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    GOLDEN_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    DIAMOND_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    NETHERITE_SPEAR_ATTACK_MISS,
+    /**
+     * @since v924
+     */
+    STONE_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    IRON_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    COPPER_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    GOLDEN_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    DIAMOND_SPEAR_USE,
+    /**
+     * @since v924
+     */
+    NETHERITE_SPEAR_USE,
+    /**
+     * @since v944
+     */
+    PAUSE_GROWTH,
+    /**
+     * @since v944
+     */
+    RESET_GROWTH,
+    /**
+     * @since v975
+     */
+    PUSHED_BY_PLAYER,
+    /**
+     * @since v975
+     */
+    BOUNCE,
     UNDEFINED
 }

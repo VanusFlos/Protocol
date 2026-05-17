@@ -8,8 +8,8 @@ import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.v361.serializer.StartGameSerializer_v361;
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode;
 import org.cloudburstmc.protocol.bedrock.data.GameType;
-import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
+import org.cloudburstmc.protocol.common.util.TextConverter;
 import org.cloudburstmc.protocol.common.util.VarInts;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,7 +27,8 @@ public class StartGameSerializer_v388 extends StartGameSerializer_v361 {
         this.writeLevelSettings(buffer, helper, packet);
 
         helper.writeString(buffer, packet.getLevelId());
-        helper.writeString(buffer, packet.getLevelName());
+        TextConverter converter = helper.getTextConverter();
+        helper.writeString(buffer, converter.serialize(packet.getLevelName(CharSequence.class)));
         helper.writeString(buffer, packet.getPremiumWorldTemplateId());
         buffer.writeBoolean(packet.isTrial());
         buffer.writeBoolean(packet.getAuthoritativeMovementMode() != AuthoritativeMovementMode.CLIENT);
@@ -37,10 +38,7 @@ public class StartGameSerializer_v388 extends StartGameSerializer_v361 {
         // cache palette for fast writing
         helper.writeTag(buffer, packet.getBlockPalette());
 
-        helper.writeArray(buffer, packet.getItemDefinitions(), (buf, h, entry) -> {
-            h.writeString(buf, entry.getIdentifier());
-            buf.writeShortLE(entry.getRuntimeId());
-        });
+        this.writeItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         helper.writeString(buffer, packet.getMultiplayerCorrelationId());
 
@@ -58,7 +56,8 @@ public class StartGameSerializer_v388 extends StartGameSerializer_v361 {
         this.readLevelSettings(buffer, helper, packet);
 
         packet.setLevelId(helper.readString(buffer));
-        packet.setLevelName(helper.readString(buffer));
+        TextConverter converter = helper.getTextConverter();
+        packet.setLevelName(converter.deserialize(helper.readString(buffer)));
         packet.setPremiumWorldTemplateId(helper.readString(buffer));
         packet.setTrial(buffer.readBoolean());
         packet.setAuthoritativeMovementMode(buffer.readBoolean() ? AuthoritativeMovementMode.SERVER : AuthoritativeMovementMode.CLIENT);
@@ -67,11 +66,7 @@ public class StartGameSerializer_v388 extends StartGameSerializer_v361 {
 
         packet.setBlockPalette(helper.readTag(buffer, NbtList.class));
 
-        helper.readArray(buffer, packet.getItemDefinitions(), (buf, packetHelper) -> {
-            String identifier = packetHelper.readString(buf);
-            short id = buf.readShortLE();
-            return new SimpleItemDefinition(identifier, id, false);
-        });
+        this.readItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         packet.setMultiplayerCorrelationId(helper.readString(buffer));
     }

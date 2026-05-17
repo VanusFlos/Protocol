@@ -8,8 +8,8 @@ import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.v419.serializer.StartGameSerializer_v419;
 import org.cloudburstmc.protocol.bedrock.data.BlockPropertyData;
 import org.cloudburstmc.protocol.bedrock.data.GameType;
-import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
+import org.cloudburstmc.protocol.common.util.TextConverter;
 import org.cloudburstmc.protocol.common.util.VarInts;
 
 @SuppressWarnings("DuplicatedCode")
@@ -29,7 +29,8 @@ public class StartGameSerializer_v428 extends StartGameSerializer_v419 {
         this.writeLevelSettings(buffer, helper, packet);
 
         helper.writeString(buffer, packet.getLevelId());
-        helper.writeString(buffer, packet.getLevelName());
+        TextConverter converter = helper.getTextConverter();
+        helper.writeString(buffer, converter.serialize(packet.getLevelName(CharSequence.class)));
         helper.writeString(buffer, packet.getPremiumWorldTemplateId());
         buffer.writeBoolean(packet.isTrial());
         writeSyncedPlayerMovementSettings(buffer, packet); // new for v428
@@ -41,11 +42,7 @@ public class StartGameSerializer_v428 extends StartGameSerializer_v419 {
             packetHelper.writeTag(buf, block.getProperties());
         });
 
-        helper.writeArray(buffer, packet.getItemDefinitions(), (buf, packetHelper, entry) -> {
-            packetHelper.writeString(buf, entry.getIdentifier());
-            buf.writeShortLE(entry.getRuntimeId());
-            buf.writeBoolean(entry.isComponentBased());
-        });
+        this.writeItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         helper.writeString(buffer, packet.getMultiplayerCorrelationId());
         buffer.writeBoolean(packet.isInventoriesServerAuthoritative());
@@ -62,7 +59,8 @@ public class StartGameSerializer_v428 extends StartGameSerializer_v419 {
         this.readLevelSettings(buffer, helper, packet);
 
         packet.setLevelId(helper.readString(buffer));
-        packet.setLevelName(helper.readString(buffer));
+        TextConverter converter = helper.getTextConverter();
+        packet.setLevelName(converter.deserialize(helper.readString(buffer)));
         packet.setPremiumWorldTemplateId(helper.readString(buffer));
         packet.setTrial(buffer.readBoolean());
         readSyncedPlayerMovementSettings(buffer, packet); // new for v428
@@ -75,12 +73,7 @@ public class StartGameSerializer_v428 extends StartGameSerializer_v419 {
             return new BlockPropertyData(name, properties);
         });
 
-        helper.readArray(buffer, packet.getItemDefinitions(), (buf, packetHelper) -> {
-            String identifier = packetHelper.readString(buf);
-            short id = buf.readShortLE();
-            boolean componentBased = buf.readBoolean();
-            return new SimpleItemDefinition(identifier, id, componentBased);
-        });
+        this.readItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         packet.setMultiplayerCorrelationId(helper.readString(buffer));
         packet.setInventoriesServerAuthoritative(buffer.readBoolean());

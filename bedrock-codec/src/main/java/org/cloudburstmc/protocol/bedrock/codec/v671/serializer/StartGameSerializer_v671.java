@@ -1,6 +1,8 @@
 package org.cloudburstmc.protocol.bedrock.codec.v671.serializer;
 
 import io.netty.buffer.ByteBuf;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.v589.serializer.StartGameSerializer_v589;
 import org.cloudburstmc.protocol.bedrock.data.*;
@@ -8,6 +10,7 @@ import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
 import org.cloudburstmc.protocol.common.util.OptionalBoolean;
 import org.cloudburstmc.protocol.common.util.VarInts;
 
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StartGameSerializer_v671 extends StartGameSerializer_v589 {
     public static final StartGameSerializer_v671 INSTANCE = new StartGameSerializer_v671();
 
@@ -23,7 +26,7 @@ public class StartGameSerializer_v671 extends StartGameSerializer_v589 {
         VarInts.writeInt(buffer, packet.getDifficulty());
         helper.writeBlockPosition(buffer, packet.getDefaultSpawn());
         buffer.writeBoolean(packet.isAchievementsDisabled());
-        buffer.writeBoolean(packet.isWorldEditor());
+        VarInts.writeInt(buffer, packet.getEditorWorldType().ordinal());
         buffer.writeBoolean(packet.isCreatedInEditor());
         buffer.writeBoolean(packet.isExportedFromEditor());
         VarInts.writeInt(buffer, packet.getDayCycleStopTime());
@@ -39,7 +42,7 @@ public class StartGameSerializer_v671 extends StartGameSerializer_v589 {
         VarInts.writeInt(buffer, packet.getPlatformBroadcastMode().ordinal());
         buffer.writeBoolean(packet.isCommandsEnabled());
         buffer.writeBoolean(packet.isTexturePacksRequired());
-        helper.writeArray(buffer, packet.getGamerules(), helper::writeGameRule);
+        helper.writeArray(buffer, packet.getGamerules(), helper::writeGameRuleInStartGame);
         helper.writeExperiments(buffer, packet.getExperiments());
         buffer.writeBoolean(packet.isExperimentsPreviouslyToggled());
         buffer.writeBoolean(packet.isBonusChestEnabled());
@@ -80,7 +83,7 @@ public class StartGameSerializer_v671 extends StartGameSerializer_v589 {
         packet.setDifficulty(VarInts.readInt(buffer));
         packet.setDefaultSpawn(helper.readBlockPosition(buffer));
         packet.setAchievementsDisabled(buffer.readBoolean());
-        packet.setWorldEditor(buffer.readBoolean());
+        packet.setEditorWorldType(WorldType.values()[VarInts.readInt(buffer)]);
         packet.setCreatedInEditor(buffer.readBoolean());
         packet.setExportedFromEditor(buffer.readBoolean());
         packet.setDayCycleStopTime(VarInts.readInt(buffer));
@@ -96,7 +99,7 @@ public class StartGameSerializer_v671 extends StartGameSerializer_v589 {
         packet.setPlatformBroadcastMode(GamePublishSetting.byId(VarInts.readInt(buffer)));
         packet.setCommandsEnabled(buffer.readBoolean());
         packet.setTexturePacksRequired(buffer.readBoolean());
-        helper.readArray(buffer, packet.getGamerules(), helper::readGameRule);
+        helper.readArray(buffer, packet.getGamerules(), helper::readGameRuleInStartGame);
         helper.readExperiments(buffer, packet.getExperiments());
         packet.setExperimentsPreviouslyToggled(buffer.readBoolean());
         packet.setBonusChestEnabled(buffer.readBoolean());

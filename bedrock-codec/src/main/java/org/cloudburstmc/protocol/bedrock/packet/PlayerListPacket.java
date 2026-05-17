@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin;
 import org.cloudburstmc.protocol.common.PacketSignal;
 
+import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class PlayerListPacket implements BedrockPacket {
     public final static class Entry {
         private final UUID uuid;
         private long entityId;
-        private String name;
+        private CharSequence name;
         private String xuid;
         private String platformChatId;
         private int buildPlatform;
@@ -47,6 +48,15 @@ public class PlayerListPacket implements BedrockPacket {
         private boolean host;
         private boolean trustedSkin;
         private boolean subClient;
+        private Color color;
+
+        public String getName() {
+            return getName(String.class);
+        }
+
+        public <T extends CharSequence> T getName(Class<T> type) {
+            return type.cast(name);
+        }
     }
 
     @Override

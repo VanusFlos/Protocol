@@ -1,6 +1,7 @@
 package org.cloudburstmc.protocol.bedrock.data.entity;
 
 public enum EntityDamageCause {
+    NONE,
     OVERRIDE,
     CONTACT,
     ENTITY_ATTACK,
@@ -31,10 +32,13 @@ public enum EntityDamageCause {
     FREEZING,
     STALACTITE,
     STALAGMITE,
+    RAM_ATTACK,
+    SONIC_BOOM,
     CAMPFIRE,
     SOUL_CAMPFIRE,
     /**
      * @since v729
+     * @deprecated since v776
      */
     MACE_SMASH;
 

@@ -7,10 +7,15 @@ import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockPacketSerializer;
 import org.cloudburstmc.protocol.bedrock.data.*;
+import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;
 import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
 import org.cloudburstmc.protocol.common.util.OptionalBoolean;
+import org.cloudburstmc.protocol.common.util.TextConverter;
 import org.cloudburstmc.protocol.common.util.VarInts;
+
+import java.util.List;
 
 @SuppressWarnings("DuplicatedCode")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,7 +37,8 @@ public class StartGameSerializer_v419 implements BedrockPacketSerializer<StartGa
         this.writeLevelSettings(buffer, helper, packet);
 
         helper.writeString(buffer, packet.getLevelId());
-        helper.writeString(buffer, packet.getLevelName());
+        TextConverter converter = helper.getTextConverter();
+        helper.writeString(buffer, converter.serialize(packet.getLevelName(CharSequence.class)));
         helper.writeString(buffer, packet.getPremiumWorldTemplateId());
         buffer.writeBoolean(packet.isTrial());
         VarInts.writeInt(buffer, packet.getAuthoritativeMovementMode().ordinal());
@@ -44,11 +50,7 @@ public class StartGameSerializer_v419 implements BedrockPacketSerializer<StartGa
             packetHelper.writeTag(buf, block.getProperties());
         });
 
-        helper.writeArray(buffer, packet.getItemDefinitions(), (buf, packetHelper, entry) -> {
-            packetHelper.writeString(buf, entry.getIdentifier());
-            buf.writeShortLE(entry.getRuntimeId());
-            buf.writeBoolean(entry.isComponentBased());
-        });
+        this.writeItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         helper.writeString(buffer, packet.getMultiplayerCorrelationId());
         buffer.writeBoolean(packet.isInventoriesServerAuthoritative());
@@ -65,7 +67,8 @@ public class StartGameSerializer_v419 implements BedrockPacketSerializer<StartGa
         this.readLevelSettings(buffer, helper, packet);
 
         packet.setLevelId(helper.readString(buffer));
-        packet.setLevelName(helper.readString(buffer));
+        TextConverter converter = helper.getTextConverter();
+        packet.setLevelName(converter.deserialize(helper.readString(buffer)));
         packet.setPremiumWorldTemplateId(helper.readString(buffer));
         packet.setTrial(buffer.readBoolean());
         packet.setAuthoritativeMovementMode(MOVEMENT_MODES[VarInts.readInt(buffer)]);
@@ -78,12 +81,7 @@ public class StartGameSerializer_v419 implements BedrockPacketSerializer<StartGa
             return new BlockPropertyData(name, properties);
         });
 
-        helper.readArray(buffer, packet.getItemDefinitions(), (buf, packetHelper) -> {
-            String identifier = packetHelper.readString(buf);
-            short id = buf.readShortLE();
-            boolean componentBased = buf.readBoolean();
-            return new SimpleItemDefinition(identifier, id, componentBased);
-        });
+        this.readItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         packet.setMultiplayerCorrelationId(helper.readString(buffer));
         packet.setInventoriesServerAuthoritative(buffer.readBoolean());
@@ -184,5 +182,22 @@ public class StartGameSerializer_v419 implements BedrockPacketSerializer<StartGa
 
     protected void writeSeed(ByteBuf buffer, long seed) {
         VarInts.writeInt(buffer, (int) seed);
+    }
+
+    protected void writeItemDefinitions(ByteBuf buffer, BedrockCodecHelper helper, List<ItemDefinition> definitions) {
+        helper.writeArray(buffer, definitions, (buf, entry) -> {
+            helper.writeString(buf, entry.getIdentifier());
+            buf.writeShortLE(entry.getRuntimeId());
+            buf.writeBoolean(entry.isComponentBased());
+        });
+    }
+
+    protected void readItemDefinitions(ByteBuf buffer, BedrockCodecHelper helper, List<ItemDefinition> definitions) {
+        helper.readArray(buffer, definitions, (buf, packetHelper) -> {
+            String identifier = packetHelper.readString(buf);
+            short id = buf.readShortLE();
+            boolean componentBased = buf.readBoolean();
+            return new SimpleItemDefinition(identifier, id, ItemVersion.LEGACY, componentBased, componentBased ? NbtMap.EMPTY : null);
+        });
     }
 }

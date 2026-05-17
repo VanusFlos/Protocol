@@ -10,8 +10,10 @@ import org.cloudburstmc.nbt.NbtType;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.v332.serializer.StartGameSerializer_v332;
 import org.cloudburstmc.protocol.bedrock.data.GameType;
+import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
+import org.cloudburstmc.protocol.common.util.TextConverter;
 import org.cloudburstmc.protocol.common.util.VarInts;
 
 import java.util.List;
@@ -31,7 +33,8 @@ public class StartGameSerializer_v361 extends StartGameSerializer_v332 {
         this.writeLevelSettings(buffer, helper, packet);
 
         helper.writeString(buffer, packet.getLevelId());
-        helper.writeString(buffer, packet.getLevelName());
+        TextConverter converter = helper.getTextConverter();
+        helper.writeString(buffer, converter.serialize(packet.getLevelName(CharSequence.class)));
         helper.writeString(buffer, packet.getPremiumWorldTemplateId());
         buffer.writeBoolean(packet.isTrial());
         buffer.writeLongLE(packet.getCurrentTick());
@@ -46,10 +49,7 @@ public class StartGameSerializer_v361 extends StartGameSerializer_v332 {
             buffer.writeShortLE(entry.getShort("id"));
         }
 
-        helper.writeArray(buffer, packet.getItemDefinitions(), (buf, entry) -> {
-            helper.writeString(buf, entry.getIdentifier());
-            buf.writeShortLE(entry.getRuntimeId());
-        });
+        this.writeItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         helper.writeString(buffer, packet.getMultiplayerCorrelationId());
 
@@ -66,7 +66,8 @@ public class StartGameSerializer_v361 extends StartGameSerializer_v332 {
         this.readLevelSettings(buffer, helper, packet);
 
         packet.setLevelId(helper.readString(buffer));
-        packet.setLevelName(helper.readString(buffer));
+        TextConverter converter = helper.getTextConverter();
+        packet.setLevelName(converter.deserialize(helper.readString(buffer)));
         packet.setPremiumWorldTemplateId(helper.readString(buffer));
         packet.setTrial(buffer.readBoolean());
         packet.setCurrentTick(buffer.readLongLE());
@@ -85,11 +86,7 @@ public class StartGameSerializer_v361 extends StartGameSerializer_v332 {
         }
         packet.setBlockPalette(new NbtList<>(NbtType.COMPOUND, palette));
 
-        helper.readArray(buffer, packet.getItemDefinitions(), (buf, packetHelper) -> {
-            String identifier = packetHelper.readString(buf);
-            short id = buf.readShortLE();
-            return new SimpleItemDefinition(identifier, id, false);
-        });
+       this.readItemDefinitions(buffer, helper, packet.getItemDefinitions());
 
         packet.setMultiplayerCorrelationId(helper.readString(buffer));
     }
@@ -106,5 +103,20 @@ public class StartGameSerializer_v361 extends StartGameSerializer_v332 {
         super.writeLevelSettings(buffer, helper, packet);
 
         buffer.writeBoolean(packet.isOnlySpawningV1Villagers());
+    }
+
+    protected void writeItemDefinitions(ByteBuf buffer, BedrockCodecHelper helper, List<ItemDefinition> definitions) {
+        helper.writeArray(buffer, definitions, (buf, entry) -> {
+            helper.writeString(buf, entry.getIdentifier());
+            buf.writeShortLE(entry.getRuntimeId());
+        });
+    }
+
+    protected void readItemDefinitions(ByteBuf buffer, BedrockCodecHelper helper, List<ItemDefinition> definitions) {
+        helper.readArray(buffer, definitions, (buf, packetHelper) -> {
+            String identifier = packetHelper.readString(buf);
+            short id = buf.readShortLE();
+            return new SimpleItemDefinition(identifier, id, false);
+        });
     }
 }
